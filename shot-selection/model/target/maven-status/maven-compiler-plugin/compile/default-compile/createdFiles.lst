@@ -1,0 +1,13 @@
+com\ftn\sbnz\model\enums\ActionType.class
+com\ftn\sbnz\model\PlayerMatchStats.class
+com\ftn\sbnz\model\facts\TeamDefenseSummary.class
+com\ftn\sbnz\model\ZoneProfile.class
+com\ftn\sbnz\model\enums\ShotQuality.class
+com\ftn\sbnz\model\enums\ShotZone.class
+com\ftn\sbnz\model\facts\QuarterEndSignal.class
+com\ftn\sbnz\model\facts\ShotEvaluation.class
+com\ftn\sbnz\model\facts\ZoneSummary.class
+com\ftn\sbnz\model\Team.class
+com\ftn\sbnz\model\ShotAttempt.class
+com\ftn\sbnz\model\Player.class
+com\ftn\sbnz\model\builder\ShotAttemptBuilder.class

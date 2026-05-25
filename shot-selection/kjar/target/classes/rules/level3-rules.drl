@@ -1,0 +1,29 @@
+package rules;
+
+import com.ftn.sbnz.model.ShotAttempt;
+import com.ftn.sbnz.model.PlayerMatchStats;
+import com.ftn.sbnz.model.facts.ShotEvaluation;
+
+rule "L3 - finalizacija"
+    agenda-group "level3"
+    lock-on-active
+    when
+        $eval : ShotEvaluation( quality == null )
+    then
+        modify($eval) { capScore() }
+        System.out.println($eval);
+end
+
+rule "POST - azuriranje statistike"
+    agenda-group "level3"
+    no-loop
+    when
+        $shot  : ShotAttempt( $sid : shotId, $pid : playerId,
+                              $made : made, $clock : gameClockSec )
+        $eval  : ShotEvaluation( shotId == $sid, quality != null )
+        $stats : PlayerMatchStats( playerId == $pid )
+    then
+        if ($made) { $stats.recordMade($clock); }
+        else       { $stats.recordMissed(); }
+        System.out.println("  [POST] " + $stats);
+end

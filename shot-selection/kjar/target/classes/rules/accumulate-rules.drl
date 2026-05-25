@@ -1,0 +1,68 @@
+package rules;
+
+import com.ftn.sbnz.model.ShotAttempt;
+import com.ftn.sbnz.model.enums.ShotZone;
+import com.ftn.sbnz.model.facts.QuarterEndSignal;
+import com.ftn.sbnz.model.facts.ZoneSummary;
+import com.ftn.sbnz.model.facts.TeamDefenseSummary;
+
+//player+zone
+rule "ACC - zone summary igraca"
+    salience 25
+    no-loop
+    when
+        $signal : QuarterEndSignal( $q : quarter )
+        $anchor : ShotAttempt( $pid : playerId, $pname : playerName,
+                               $zone : zone, quarter <= $q )
+        accumulate(
+            ShotAttempt( playerId == $pid, zone == $zone,
+                         quarter <= $q, $made : made );
+            $count   : count( 1 ),
+            $avgMade : average( $made == true ? 1 : 0 )
+        )
+        eval( ((Number)$count).intValue() > 0 )
+        not ZoneSummary( playerId == $pid, zone == $zone, quarter == $q )
+    then
+        double efg  = ((Number)$avgMade).doubleValue();
+        int    cnt  = ((Number)$count).intValue();
+        String name = ($pname != null) ? $pname : $pid;
+        insert( new ZoneSummary($pid, name, $zone, efg, cnt, $q) );
+        System.out.println("  [ACC] ZoneSummary | " + name + " | " + $zone
+            + " | eFG%=" + String.format("%.0f%%", efg * 100)
+            + " | suts=" + cnt + " | Q" + $q);
+end
+
+//defendingteam+zone
+rule "ACC - team defense summary"
+    salience 25
+    no-loop
+    when
+        $signal : QuarterEndSignal( $q : quarter )
+        $anchor : ShotAttempt( $defTeam : defendingTeamId,
+                               $zone : zone, quarter <= $q )
+        accumulate(
+            ShotAttempt( defendingTeamId == $defTeam, zone == $zone,
+                         quarter <= $q, $dist : defenderDistFt );
+            $count   : count( 1 ),
+            $avgDist : average( $dist )
+        )
+        eval( ((Number)$count).intValue() > 0 )
+        not TeamDefenseSummary( teamId == $defTeam, zone == $zone, quarter == $q )
+    then
+        double avgDist = ((Number)$avgDist).doubleValue();
+        int    cnt     = ((Number)$count).intValue();
+        insert( new TeamDefenseSummary($defTeam, $zone, avgDist, cnt, $q) );
+        System.out.println("  [ACC] TeamDefenseSummary | tim=" + $defTeam
+            + " | " + $zone + " | avgDist=" + String.format("%.1f", avgDist) + "ft"
+            + " | suts=" + cnt + " | Q" + $q);
+end
+
+rule "ACC - obrisi signal"
+    salience 1
+    no-loop
+    when
+        $signal : QuarterEndSignal()
+    then
+        System.out.println("  [ACC] QuarterEndSignal Q" + $signal.getQuarter() + " obrisan");
+        delete($signal);
+end

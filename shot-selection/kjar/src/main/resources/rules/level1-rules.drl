@@ -1,0 +1,62 @@
+package rules;
+
+import com.ftn.sbnz.model.ShotAttempt;
+import com.ftn.sbnz.model.Player;
+import com.ftn.sbnz.model.ZoneProfile;
+import com.ftn.sbnz.model.facts.ShotEvaluation;
+
+rule "INIT - kreiraj evaluaciju"
+    agenda-group "init"
+    no-loop
+    when
+        $shot   : ShotAttempt( $sid : shotId, $pid : playerId )
+        $player : Player( id == $pid, $name : name )
+        not ShotEvaluation( shotId == $sid )
+    then
+        System.out.println("\n[SHOT] " + $player.getName());
+        System.out.println("  >> forward chaining:");
+        insert( new ShotEvaluation($sid, $pid, $player.getName()) );
+end
+
+rule "L1 - slobodan sut"
+    agenda-group "level1"
+    lock-on-active
+    when
+        $shot : ShotAttempt( defenderDistFt > 4.0, $sid : shotId )
+        $eval : ShotEvaluation( shotId == $sid, quality == null ) @watch( !score, !activeFactors )
+    then
+        System.out.println("  [L1] slobodan sut +20");
+        modify($eval) {
+            setScore($eval.getScore() + 20),
+            addFactor("Slobodan sut +20")
+        }
+end
+
+rule "L1 - visokokvalitetna zona"
+    agenda-group "level1"
+    lock-on-active
+    when
+        $shot    : ShotAttempt( $sid : shotId, $zone : zone )
+        $profile : ZoneProfile( zone == $zone, highValue == true )
+        $eval    : ShotEvaluation( shotId == $sid, quality == null ) @watch( !score, !activeFactors )
+    then
+        System.out.println("  [L1] visokokvalitetna zona " + $zone + " +25");
+        modify($eval) {
+            setScore($eval.getScore() + 25),
+            addFactor("Visokokvalitetna zona " + $zone + " +25")
+        }
+end
+
+rule "L1 - catch and shoot"
+    agenda-group "level1"
+    lock-on-active
+    when
+        $shot : ShotAttempt( dribbles <= 1, touchTimeSec <= 2.0, $sid : shotId )
+        $eval : ShotEvaluation( shotId == $sid, quality == null ) @watch( !score, !activeFactors )
+    then
+        System.out.println("  [L1] catch-and-shoot +15");
+        modify($eval) {
+            setScore($eval.getScore() + 15),
+            addFactor("Catch-and-shoot +15")
+        }
+end

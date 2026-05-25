@@ -1,0 +1,4 @@
+com\ftn\sbnz\service\Application.class
+com\ftn\sbnz\service\util\SessionInitializer.class
+com\ftn\sbnz\service\util\KnowledgeSessionHelper.class
+com\ftn\sbnz\service\examples\GameSimulationExample.class
